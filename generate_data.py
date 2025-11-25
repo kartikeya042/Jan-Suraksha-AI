@@ -1,52 +1,65 @@
-# generate_data.py
+# generate_data.py (Indian Edition 🇮🇳)
 import pandas as pd
 import numpy as np
-import random
 
-def generate_insurance_data(num_samples=5000):
+def generate_indian_insurance_data(num_samples=5000):
     np.random.seed(42)
     
+    # --- 1. Demographics specific to Indian Low-Income Sector ---
+    occupations = [
+        'Daily Wage Laborer (MNREGA)', 
+        'Auto/Taxi Driver', 
+        'Street Vendor (Rehdi)', 
+        'Farmer (Kisan)', 
+        'Security Guard', 
+        'Delivery Partner (Gig Worker)', 
+        'Small Shopkeeper'
+    ]
+    
     data = {
-        'age': np.random.randint(18, 65, size=num_samples),
-        'bmi': np.random.normal(25, 4, size=num_samples).round(1),
-        'daily_income_inr': np.random.randint(250, 2000, size=num_samples),
-        'children': np.random.randint(0, 5, size=num_samples),
-        'smoker': np.random.choice(['Yes', 'No'], size=num_samples, p=[0.3, 0.7]),
-        'occupation': np.random.choice(
-            ['Construction Worker', 'Farmer', 'Street Vendor', 'Driver', 'Factory Worker', 'Shop Assistant'], 
-            size=num_samples
-        ),
-        'medical_history': np.random.choice(['None', 'Diabetes', 'BP', 'Respiratory'], size=num_samples, p=[0.7, 0.1, 0.1, 0.1])
+        'age': np.random.randint(18, 60, size=num_samples),
+        'bmi': np.random.normal(24, 3.5, size=num_samples).round(1),
+        # Daily income between ₹200 and ₹1500
+        'daily_income_inr': np.random.randint(200, 1500, size=num_samples), 
+        'children': np.random.randint(0, 4, size=num_samples),
+        # Tobacco usage is higher in some demographics, critical for insurance
+        'smoker_tobacco': np.random.choice(['Yes', 'No'], size=num_samples, p=[0.4, 0.6]),
+        'occupation': np.random.choice(occupations, size=num_samples),
+        'tier_city': np.random.choice(['Tier-1', 'Tier-2', 'Rural'], size=num_samples)
     }
     
     df = pd.DataFrame(data)
 
-    # --- THE LOGIC: Assigning the "Correct" Policy based on rules ---
-    def assign_policy(row):
-        # Rule 1: High Physical Risk Jobs -> Accidental Death Cover
-        if row['occupation'] in ['Construction Worker', 'Driver', 'Factory Worker']:
-            return 'Accidental Death & Disability Plan'
+    # --- 2. The Indian Logic (Mapping to Real Schemes) ---
+    def assign_indian_policy(row):
         
-        # Rule 2: Very Low Income -> Government Subsidized (e.g., PMJJBY type)
-        if row['daily_income_inr'] < 500:
-            return 'Govt. Subsidized Micro-Term'
+        # SCHEME 1: Pradhan Mantri Suraksha Bima Yojana (PMSBY)
+        # Logic: High risk of accident, very low income.
+        if row['occupation'] in ['Daily Wage Laborer (MNREGA)', 'Auto/Taxi Driver', 'Delivery Partner (Gig Worker)']:
+            return 'PMSBY (Accidental Cover - ₹20/year)'
         
-        # Rule 3: High Dependents -> Family Income Benefit
-        if row['children'] >= 3:
-            return 'Family Income Protection Plan'
+        # SCHEME 2: Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY)
+        # Logic: Stable but low income, needs pure life cover.
+        if row['daily_income_inr'] < 500 and row['age'] < 50:
+            return 'PMJJBY (Life Cover - ₹436/year)'
         
-        # Rule 4: Smokers or High BMI -> Critical Illness add-on needed
-        if row['smoker'] == 'Yes' or row['bmi'] > 30 or row['medical_history'] != 'None':
-            return 'High-Risk Critical Illness Plan'
+        # SCHEME 3: Saral Jeevan Bima (Standard Term)
+        # Logic: Better income (Shopkeepers), can afford standard term insurance.
+        if row['daily_income_inr'] > 800:
+            return 'Saral Jeevan Bima (Standard Term)'
         
-        # Default for healthy, moderate income
-        return 'Standard Micro-Endowment Plan'
+        # SCHEME 4: Rural Postal Life Insurance (RPLI)
+        # Logic: Specifically for rural residents/farmers.
+        if row['occupation'] == 'Farmer (Kisan)' or row['tier_city'] == 'Rural':
+            return 'Gramin Dak Sevak (Rural Postal Life)'
+        
+        # Default fallback
+        return 'Micro-Endowment (Chota Bachat)'
 
-    df['recommended_policy'] = df.apply(assign_policy, axis=1)
+    df['recommended_policy'] = df.apply(assign_indian_policy, axis=1)
     
-    # Save to CSV
     df.to_csv('insurance_dataset.csv', index=False)
-    print("Dataset generated successfully: 'insurance_dataset.csv'")
+    print("🇮🇳 Indian Dataset generated: 'insurance_dataset.csv'")
 
 if __name__ == "__main__":
-    generate_insurance_data()
+    generate_indian_insurance_data()
