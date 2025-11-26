@@ -2,6 +2,7 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 
 # Load the trained model (You must re-run train_model.py first!)
 try:
@@ -57,7 +58,10 @@ if st.sidebar.button("Find Best Scheme (योजना खोजें)"):
         # Dummy value for Tier City if not used in model, or encode if used
         tier_enc = encoders['tier_city'].transform(['Rural' if 'Rural' in city else 'Tier-2'])[0]
 
-        input_data = np.array([[age, bmi, income, children, tobacco_enc, occ_enc, tier_enc]])
+        input_data = pd.DataFrame(
+            [[age, bmi, income, children, tobacco_enc, occ_enc, tier_enc]],
+            columns=['age', 'bmi', 'daily_income_inr', 'children', 'smoker_tobacco', 'occupation', 'tier_city']
+        )
         
         prediction_idx = model.predict(input_data)[0]
         policy_name = encoders['target'].inverse_transform([prediction_idx])[0]
